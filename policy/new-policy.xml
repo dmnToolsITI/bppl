@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<! Policies are built around Objects and their characteristics.  Objects may be of different types
+  (with a type attribute declaring it)
+     - firewall (also router with Layer-3 rules, the Layer-3 rules are the differentiators)
+     - router (may have forwarding rules, descriptions of routing protocols supported)
+     - Layer-2 device
+     - PLC, typically an actuator, may be connected at Layer-3 or Layer2
+     - HMI, just a host, typically has network facing functions, could have a history or other server
+     - RTU, a device that 'does something'  but doesn't necessarily use human input
+     - zone, a network zone, a set of devices subject to the same access control policy, typically in a 
+       network faced by an interface in a firewall 
+     - flow, a set of IP headers that pass from source to destination all admitted by exactly the same
+       sequence of access control, NAT, and routing rules
+
+    An ObjectSet is a collection of objects that may be of the same type, or may be a mixture. The type attribute
+    names the type or 
+
+A PolicyRule has an existential identifer to describe which of the objects in the Domain
+    are selected for expression of the rule.
+
+    A Domain is a set of ObjectSets 
+
+    An ObjectSet describes a set, using attribute 'type' to differentiate the types of objects in the set.
+    Type 'singleton' is one object.  Type 'group' 
+ 
+--->
+
+<!DOCTYPE PolicyRuleSet [ 
+<!ELEMENT PolicyRuleSet (PolicyRule*,ObjectSet*, PolicyRule*)>
+<!ATTLIST PolicyRuleSet dtdVersion CDATA #IMPLIED>
+<!ELEMENT PolicyRule (Quantifier, Domain, Condition)>
+<!ATTLIST PolicyRule id CDATA #REQUIRED>
+
+<!-- Select element contains name of function to call on an object to 
+     determine whether selected
+--->
+<!ELEMENT Condition EMPTY>
+<!ATTLIST Condition condition CDATA #REQUIRED>
+
+<!ELEMENT Select EMPTY>
+<!ATTLIST Select boolean CDATA #REQUIRED>
+
+<!-- ObjectSet has a type and (optionally) a selecting function
+<!ELEMENT ObjectSet (Select?) >
+<!ATTLIST ObjectSet type CDATA #REQUIRED>
+-->
+<!ELEMENT Quantifier EMPTY>
+<!ATTLIST Quantifier operator (exists|not_exists|for_all|not_forall) #REQUIRED>
+
+<!-- Domain is a collection of ObjectSets. Has a name -->
+<!ELEMENT Domain (ObjectSet+) >
+<!ATTLIST ObjectSet name CDATA #IMPLIED>
+
+<!ELEMENT Description (#PCDATA)>
+]>
+<PolicyRuleSet
+ dtdVersion="2.0.15">
+ <PolicyRule id="1" >
+    <Quantifier operator="exists" />
+    <Domain> 
+        <ObjectSet 
+            variable="jump_host" 
+            type="name" >
+            <Condition required="active" />
+        </ObjectSet>
+        <ObjectSet 
+            variable="EMS" 
+            type="group" >
+            <Condition required="monitored"/> 
+        </ObjectSet>
+    </Domain>        
+    <Formula boolean="Safe(EMS) and Secure(jump_host)" />
+</PolicyRule>
+</PolicyRuleSet>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE PolicyRuleSet [ 
+
+<!-- 'outside' the specification of policy rules we define ObjectSets. Identifiers
+      to these are used to construct policy rules -->
+
+<!ELEMENT PolicyRuleSet (ObjectSet+, PolicyRule+,Description?)>
+<!ATTLIST PolicyRuleSet dtdVersion CDATA #IMPLIED>
+
+<!-- A PolicyRule operates over a list of ObjectSets which are named in the rule
+     through the Name subelement.  A function is applied whose arguments are
+     the elements from the list of ObjectSets (referenced by name).  Each call 
+     selects an object from each list.  The existential qualifier specifies how
+     to combine the results of these calls, indicating how to interpret the set of results
+     as satisfying the policy or not. -->
+      
+<!ELEMENT PolicyRule (Quantifier,Name+,Function?,Description?)>
+<!ATTLIST PolicyRule id CDATA #REQUIRED>
+
+<!-- the Quantifier element describes how to bring together the results of 
+     evaluations of the application of Boolean function to every ObjectSet
+     in the expressed Domain -->
+<!ELEMENT Quantifier EMPTY>
+<!ATTLIST Quantifier operator (exists|not_exists|for_all|not_forall) #REQUIRED>
+
+<!ELEMENT Name EMPTY>
+<!ATTLIST Name name CDATA #REQUIRED>
+
+<!ELEMENT Function EMPTY>
+<!ATTLIST Function function CDATA #REQUIRED>
+
+<!-- The ObjectSet attribute 'base' names a collection of objects defined outside
+     of this DTD and XML instance.  Attribute 'name' is the reference used within
+     the XML expression, when needed. Attribute 'select' names a Boolean function
+     defined outside of this file which is applied to every object in 'base' and the
+     ones yielding True are part of the ObjectSet named by the 'name' attribute.  -->
+
+<!ELEMENT ObjectSet (Function?,Description?) >
+<!ATTLIST ObjectSet base CDATA #REQUIRED>
+<!ATTLIST ObjectSet name CDATA #REQUIRED>
+<!ELEMENT Description (#PCDATA)>
+]>
+<PolicyRuleSet
+ dtdVersion="0.1">
+
+<ObjectSet base="devices" name="ESPdevs" >
+    <Function function="inESP" />
+</ObjectSet>
+ 
+<ObjectSet base="devices" name="PLCs" >
+    <Function function="isPLC" />
+</ObjectSet>
+ 
+<ObjectSet base="flows"   name="flowsToESP" >
+    <Function function="targetESP" />
+</ObjectSet>
+
+<ObjectSet base="flows"   name="all_flows" >
+    <Description>set of all flows</Description> 
+</ObjectSet>
+
+<ObjectSet base="zones"   name="zones" >
+<Description> All network zones </Description>
+</ObjectSet>
+
+<PolicyRule id="1">
+    <Quantifier operator="for_all" />
+    <Name name="flowsToESP" />
+    <Name name="ESPdevs" />
+    <Function function="checkTargetCriticality(@flowsToESP,ESPdevs)" />
+    <Description>check whether flow destination is recognized/document ESP device/service</Description> 
+</PolicyRule>
+
+<PolicyRule id="2">
+    <Quantifier operator="for_all" />
+    <Name name="all_flows" />
+    <Function function="protocolTerminates(@all_flows)" />
+    <Description>check whether there is a protocol break</Description> 
+</PolicyRule>
+
+<PolicyRule id="3">
+    <Quantifier operator="not_exists" />
+    <Name name="all_flows" />
+    <Function function="checkHighToLow(@all_flows)" />
+    <Description>check </Description> 
+</PolicyRule>
+
+
+</PolicyRuleSet>
